@@ -33,32 +33,27 @@ pip install transformers torch datasets evaluate accelerate rouge_score matplotl
 ```
 
 ---
+### 💻 How to Run
+1. **Open the Notebook:** Open the Jupyter Notebook (`Concept_Distillation_GSM8K.ipynb`).
+2. **Enable GPU (Colab):** If using Google Colab, navigate to **Runtime > Change runtime type** and select **T4 GPU**.
+3. **Initialize Environment:** Run **Cell 1** to initialize the environment and verify GPU allocation.
+4. **Restart if Necessary:** If `bitsandbytes` was freshly installed in the first cell, **Restart the Session**, then run all cells sequentially.
+5. **Execution:** The pipeline is fully automated. Let it run completely to generate a final Matplotlib performance comparison graph at the end of the execution.
 
-💻 How to Run
-Open the Jupyter Notebook (Concept_Distillation_GSM8K.ipynb).
+---
 
-If using Google Colab, navigate to Runtime > Change runtime type and select T4 GPU.
+### 📊 Pipeline Structure
+* **Data Ingestion:** Securely fetches raw JSONL GSM8K data directly via HTTP to prevent library caching conflicts.
+* **Teacher Rationale Generation:** The T5-XL model iterates through the training set, generating step-by-step logic paths for each math problem.
+* **Memory Cleanup:** Aggressive Garbage Collection (`gc.collect()` and `torch.cuda.empty_cache()`) clears the Teacher model from VRAM to make room for the student.
+* **Student Fine-Tuning:** The T5-Base model is trained via `Seq2SeqTrainer` using the Teacher's rationales as target labels.
+* **Comparative Evaluation:** An untrained Baseline Student and the Fine-Tuned Distilled Student are evaluated against the test set to measure improvement.
 
-Run Cell 1 to initialize the environment and verify GPU allocation.
+---
 
-If bitsandbytes was freshly installed, Restart the Session, then run all cells sequentially.
+### 🔬 Key Academic Findings
+This project serves as an experimental exploration into the **Capacity Limits of Small Language Models**. 
 
-The pipeline is fully automated and will generate a final Matplotlib performance comparison graph at the end of execution.
-
-📊 Pipeline Structure
-Data Ingestion: Securely fetches raw JSONL GSM8K data directly via HTTP to prevent library caching conflicts.
-
-Teacher Rationale Generation: The T5-XL model iterates through the training set, generating step-by-step logic paths for each math problem.
-
-Memory Cleanup: Aggressive Garbage Collection (gc.collect() and torch.cuda.empty_cache()) clears the Teacher model from VRAM.
-
-Student Fine-Tuning: The T5-Base model is trained via Seq2SeqTrainer using the Teacher's rationales as target labels.
-
-Comparative Evaluation: An untrained Baseline Student and the Fine-Tuned Distilled Student are evaluated against the test set.
-
-🔬 Key Academic Findings
-This project serves as an experimental exploration into the Capacity Limits of Small Language Models.
-
-Initial runs utilizing Flan-T5-Small (60M parameters) demonstrated textbook Catastrophic Forgetting / Model Collapse. The model lacked the neural parameter space to memorize multi-step math logic, resulting in the destruction of its pre-trained linguistic weights (evidenced by repeating token loops like 4 - 4 - 4...).
-
+* **Catastrophic Forgetting & Model Collapse:** Initial runs utilizing `Flan-T5-Small` (60M parameters) demonstrated textbook Catastrophic Forgetting. The model lacked the neural parameter space to memorize multi-step math logic, resulting in the destruction of its pre-trained linguistic weights (evidenced by repeating token loops like `4 - 4 - 4...`). 
+* **The Parameter Threshold:** Upgrading the student to `Flan-T5-Base` (250M parameters) and expanding the dataset stabilized the gradient updates. This experimentally proves that transferring complex reasoning via Knowledge Distillation requires a strict minimum parameter threshold to be successful.
 Upgrading the student to Flan-T5-Base (250M parameters) and expanding the dataset stabilized the gradient updates, proving that transferring complex reasoning via distillation requires a strict minimum parameter threshold.
